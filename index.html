@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Versa AI Test</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 { color: #00ff00; }
+        #chat-box {
+            width: 100%;
+            max-width: 600px;
+            height: 60vh;
+            border: 1px solid #333;
+            background: #1e1e1e;
+            padding: 10px;
+            overflow-y: auto;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .message { margin: 10px 0; padding: 8px; border-radius: 5px; }
+        .user { background: #004d40; text-align: right; align-self: flex-end; }
+        .bot { background: #263238; text-align: left; border-left: 3px solid #00ff00; }
+        
+        #input-area {
+            display: flex;
+            width: 100%;
+            max-width: 600px;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            background: #333;
+            color: #fff;
+            outline: none;
+        }
+        button {
+            padding: 10px 20px;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:disabled { background: #555; }
+    </style>
+</head>
+<body>
+
+    <h2>VERSA AI SERVER STATUS: <span style="color:#00ff00">LIVE</span></h2>
+
+    <div id="chat-box">
+        <div class="message bot">System: Server connected. Waiting for input...</div>
+    </div>
+
+    <div id="input-area">
+        <input type="text" id="userInput" placeholder="Type a message..." />
+        <button onclick="sendMessage()" id="sendBtn">SEND</button>
+    </div>
+
+    <script>
+        // THIS IS YOUR LIVE TUNNEL URL FROM THE SCREENSHOT
+        const API_URL = "https://a04f787e4066d86dae1b511ba07ed5c6.serveousercontent.com/chat";
+
+        async function sendMessage() {
+            const inputField = document.getElementById('userInput');
+            const chatBox = document.getElementById('chat-box');
+            const sendBtn = document.getElementById('sendBtn');
+            const message = inputField.value.trim();
+
+            if (!message) return;
+
+            // Disable button while loading
+            sendBtn.disabled = true;
+            sendBtn.innerText = "...";
+
+            // 1. Show User Message
+            chatBox.innerHTML += `<div class="message user"><b>You:</b> ${message}</div>`;
+            inputField.value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                // 2. Send to Your Termux Phone Server
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+
+                // 3. Show Bot Response
+                if (data.reply) {
+                    chatBox.innerHTML += `<div class="message bot"><b>Versa:</b> ${data.reply}</div>`;
+                } else {
+                    chatBox.innerHTML += `<div class="message bot" style="color:red">Error: ${JSON.stringify(data)}</div>`;
+                }
+
+            } catch (error) {
+                chatBox.innerHTML += `<div class="message bot" style="color:red">Connection Failed. Is Termux running?</div>`;
+                console.error(error);
+            }
+
+            // Re-enable button
+            sendBtn.disabled = false;
+            sendBtn.innerText = "SEND";
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+
+</body>
+</html>
